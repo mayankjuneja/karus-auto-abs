@@ -280,7 +280,7 @@ merged['target'].value_counts(dropna = False)
 
 
 e_folder = 'data/transaction/prepared/'
-e_file = '{} transaction prepared.csv'.format(term)
+e_file = '{} transaction.csv'.format(term)
 e_path = e_folder + e_file
 e_path
 

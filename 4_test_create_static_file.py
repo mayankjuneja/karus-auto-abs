@@ -3,7 +3,7 @@
 
 # ### Load libs
 
-# In[11]:
+# In[1]:
 
 
 import pandas as pd
@@ -21,7 +21,7 @@ import sys
 pandarallel.initialize()
 
 
-# In[12]:
+# In[2]:
 
 
 n = 750
@@ -32,16 +32,16 @@ pd.set_option('display.max_colwidth', -1)
 
 # ### Load data
 
-# In[13]:
+# In[3]:
 
 
-term = 'AmeriCredit Automobile Receivables Trust 2017-1 Data Tape'
+term = 'AmeriCredit Automobile Receivables Trust 2020-3 Data Tape'
 finder = re.compile('\d{4,}\W\d{1,}')
 add_id = re.findall(finder, term)[0]
 add_id
 
 
-# In[14]:
+# In[4]:
 
 
 # load abs
@@ -49,26 +49,14 @@ folder = 'data/transaction/'
 file = '{}.csv'.format(term)
 path = folder + file
 data = pd.read_csv(path)
-init_shape = data.shape[0]
 data.shape
 
 
-# In[15]:
+# In[5]:
 
 
-data = data.drop_duplicates(subset = ['assetNumber', 'reportingPeriodBeginningDate'], keep = 'first')
-sec_shape = data.shape[0]
+data = data.drop_duplicates()
 data.shape
-
-
-# In[17]:
-
-
-if init_shape == sec_shape:
-    print('Matching shapes')
-else:
-    sys.exit('DUPLICATE ROWS')
-    
 
 
 # In[6]:
@@ -488,113 +476,45 @@ def convert_static(df):
     return account_dict
 
 
-# In[28]:
-
-
-log = {}
-log['securitization'] = term
-master_list = []
-broke = 0
-cautions = 0
-status = 'good'
-s1 = time.time()
-ids_count = 0
-for ids in id_lists:
-    
-    # get update
-    ids_count = ids_count + len(ids)
-    percent = ids_count / len(all_ids)
-    print(ids_count, percent)
-    
-    # create sub
-    sub_df = data[data[id_col].isin(ids)]
-    sub_df['indexTransaction'] = sub_df.index
-    sub_df = sub_df.reset_index(drop = True)
-    splits = list(sub_df.groupby(id_col)) 
-    l = [splits[n_][1] for n_ in list(range(len(splits)))]
-    a = np.array(l)
-    
-    # get results
-    s2 = time.time()
-    try:
-        results = [convert_static(d) for d in a]
-        for r in results:
-            master_list.append(r)
-    except:
-        try:
-            cautions = cautions + 1
-            print('HITTING EXCEPTION')
-            for l2 in l:
-                res = convert_static(l2)
-                master_list.append(res)
-        except:
-            status = 'bad'
-            broke = broke + 1
-            if broke > 0:
-                sys.exit('Too many errors...')
-    
-    e1 = time.time()
-    e2 = time.time()
-    log['{}'.format(ids_count)] = (e2 - s2)
-    
-    print(e2 - s2)
-    print(e1 - s1)
-    print('-----------------------------')
-    
-
-
-# In[29]:
-
-
-log['total_time'] = e1 - s1
-log['run_status'] = status
-log['cautions'] = cautions
-
-
-# In[30]:
-
-
-master = pd.DataFrame(master_list)
-log['loans'] = len(master)
-
-
-# In[31]:
-
-
-cs = master['obligorCreditScoreLocCurrent'].mean()
-if cs <= 600:
-    rating = 'sub_prime'
-elif cs > 600 and cs <= 700:
-    rating = 'near_prime'
-elif cs > 720:
-    rating = 'prime'
-else:
-    rating = 'other'
-log['average_credit'] = cs
-log['rating'] = rating
-
-
-# In[32]:
-
-
-len(all_ids) == len(master_list)
-
-
 # In[33]:
 
 
-master['accountStatusEvent'].value_counts(dropna = False)
+num_ids = 500
+test_ids = all_ids[0:num_ids]
 
-
-# ### Adding final fields
 
 # In[34]:
 
 
-master['securitization'] = term
+r_holder = []
+s = time.time()
+for _id in test_ids:
+    
+    test_sub = data[data['id'] == _id]
+    test_sub['indexTransaction'] = test_sub.index
+    test_sub = test_sub.reset_index(drop = True)
+    e = time.time()
+    res = convert_static(test_sub)
+    r_holder.append(res)
+    
+e - s
 
 
 # In[35]:
+
+
+test_df = pd.DataFrame(r_holder)
+
+
+# In[37]:
+
+
+test_df.head()
+
+
+# ### Add target
+
+# In[39]:
 
 
 def get_target(row):
@@ -626,47 +546,25 @@ def get_target(row):
     
 
 
-# In[36]:
-
-
-master['target'] = master.apply(get_target, axis = 1)
-
-
-# In[37]:
-
-
-master['target'].value_counts(dropna = False)
-
-
-# In[38]:
-
-
-master.shape
-
-
-# ### Export
-
-# In[39]:
-
-
-e_folder = 'data/static/'
-e_file = '{} static.csv'.format(term)
-e_path = e_folder + e_file
-master.to_csv(e_path, index = False)
-
-
 # In[40]:
 
 
-# export log
-j_folder = 'data/static/log/'
-j_file = '{} log.json'.format(term)
-j_path = j_folder + j_file
-with open(j_path, 'w') as outfile:  
-    json.dump(log, outfile, indent = 4, separators = (',', ': '), sort_keys = False)
+test_df['target'] = test_df.apply(get_target, axis = 1)
 
 
 # In[41]:
+
+
+test_df['target'].value_counts(dropna = False)
+
+
+# In[42]:
+
+
+test_df.shape
+
+
+# In[43]:
 
 
 print('continue...')

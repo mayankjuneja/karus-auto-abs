@@ -49,7 +49,7 @@ use_keys = [k for k in keys if k != 'total_securitizations']
 # In[4]:
 
 
-term = 'AmeriCredit Automobile Receivables Trust 2017-1 Data Tape'
+term = 'AmeriCredit Automobile Receivables Trust 2020-1 Data Tape'
 securitization = [file for file in use_keys if term in file][0]
 securitization
 
