@@ -3,7 +3,7 @@
 
 # ### Load libs
 
-# In[1]:
+# In[11]:
 
 
 import pandas as pd
@@ -21,7 +21,7 @@ import sys
 pandarallel.initialize()
 
 
-# In[2]:
+# In[12]:
 
 
 n = 750
@@ -32,7 +32,7 @@ pd.set_option('display.max_colwidth', -1)
 
 # ### Load data
 
-# In[3]:
+# In[13]:
 
 
 term = 'AmeriCredit Automobile Receivables Trust 2017-1 Data Tape'
@@ -41,7 +41,7 @@ add_id = re.findall(finder, term)[0]
 add_id
 
 
-# In[4]:
+# In[14]:
 
 
 # load abs
@@ -53,7 +53,7 @@ init_shape = data.shape[0]
 data.shape
 
 
-# In[5]:
+# In[15]:
 
 
 data = data.drop_duplicates(subset = ['assetNumber', 'reportingPeriodBeginningDate'], keep = 'first')
@@ -61,7 +61,7 @@ sec_shape = data.shape[0]
 data.shape
 
 
-# In[6]:
+# In[17]:
 
 
 if init_shape == sec_shape:
@@ -71,7 +71,7 @@ else:
     
 
 
-# In[7]:
+# In[6]:
 
 
 # load fields
@@ -82,7 +82,7 @@ with open(f_path) as f:
     fields = json.load(f)
 
 
-# In[8]:
+# In[7]:
 
 
 # load mapper
@@ -96,7 +96,7 @@ with open(m_path) as f:
 
 # ### Setting fields
 
-# In[9]:
+# In[8]:
 
 
 init_id = fields['init_id'][0]
@@ -109,16 +109,11 @@ loc_cols = fields['all_loc']
 numeric_cols = fields['numeric']
 all_vals_cols = fields['all_vals']
 min_max_cols = fields['min_max']
-west = fields['regions']['west']
-south_west = fields['regions']['south_west']
-south_east = fields['regions']['south_east']
-mid_west = fields['regions']['mid_west']
-north_east = fields['regions']['north_east']
 
 
 # ### ID and dates
 
-# In[10]:
+# In[9]:
 
 
 def reorder_date(init):
@@ -144,13 +139,13 @@ def reorder_date(init):
     return date
 
 
-# In[11]:
+# In[10]:
 
 
 data['id'] = data[init_id].str.replace('=', '').str.replace('"', '').str.strip() + '-' + add_id
 
 
-# In[12]:
+# In[11]:
 
 
 for col in date_cols:
@@ -161,7 +156,7 @@ for col in date_cols:
     
 
 
-# In[13]:
+# In[12]:
 
 
 # s_col = 'loanMaturityDate'
@@ -171,13 +166,13 @@ for col in date_cols:
 
 # ### Replacing values
 
-# In[14]:
+# In[13]:
 
 
 data[replacer_cols] = data[replacer_cols].replace('-', np.nan)
 
 
-# In[15]:
+# In[14]:
 
 
 # clean cols
@@ -189,7 +184,7 @@ for col in clean_cols:
 
 # ### Replacing values
 
-# In[16]:
+# In[15]:
 
 
 def replace_val(init, column):
@@ -219,7 +214,7 @@ def replace_val(init, column):
     
 
 
-# In[17]:
+# In[16]:
 
 
 for col in m_cols:
@@ -230,7 +225,7 @@ for col in m_cols:
     
 
 
-# In[18]:
+# In[17]:
 
 
 # s_col = 'subvented'
@@ -240,7 +235,7 @@ for col in m_cols:
 
 # ### Account status
 
-# In[19]:
+# In[18]:
 
 
 def acct_status(row, b_col, e_col, zero_col, thresh):
@@ -265,7 +260,7 @@ def acct_status(row, b_col, e_col, zero_col, thresh):
     
 
 
-# In[20]:
+# In[19]:
 
 
 b_col = 'reportingPeriodBeginningLoanBalanceAmount'
@@ -274,13 +269,13 @@ z_col = 'zeroBalanceCodeM'
 thresh = 50
 
 
-# In[21]:
+# In[20]:
 
 
 data['accountStatus'] = data.parallel_apply(acct_status, args = (b_col, e_col, z_col, thresh, ), axis = 1)
 
 
-# In[22]:
+# In[21]:
 
 
 data['accountStatus'].value_counts()
@@ -288,7 +283,7 @@ data['accountStatus'].value_counts()
 
 # ### Numeric conversion
 
-# In[23]:
+# In[22]:
 
 
 # force convert cols to numeric
@@ -300,7 +295,7 @@ for col in numeric_cols:
 
 # ### Application
 
-# In[24]:
+# In[23]:
 
 
 id_col = 'id'
@@ -308,7 +303,7 @@ status_col = 'accountStatus'
 values = ['Charged-off', 'Prepaid or Matured', 'Repurchased or Replaced']
 
 
-# In[25]:
+# In[24]:
 
 
 all_ids = list(data[id_col].unique())
@@ -317,7 +312,7 @@ print_vals = list(range(0, len(all_ids), 100))
 len(all_ids)
 
 
-# In[26]:
+# In[25]:
 
 
 # break ids into list chunks
@@ -326,13 +321,13 @@ id_lists = [all_ids[i:i + num] for i in range(0, len(all_ids), num)]
 #id_lists = [id_lists[-1]]
 
 
-# In[27]:
+# In[26]:
 
 
 len(id_lists)
 
 
-# In[28]:
+# In[27]:
 
 
 def convert_static(df):
@@ -493,7 +488,7 @@ def convert_static(df):
     return account_dict
 
 
-# In[29]:
+# In[28]:
 
 
 log = {}
@@ -548,7 +543,7 @@ for ids in id_lists:
     
 
 
-# In[30]:
+# In[29]:
 
 
 log['total_time'] = e1 - s1
@@ -556,14 +551,14 @@ log['run_status'] = status
 log['cautions'] = cautions
 
 
-# In[31]:
+# In[30]:
 
 
 master = pd.DataFrame(master_list)
 log['loans'] = len(master)
 
 
-# In[32]:
+# In[31]:
 
 
 cs = master['obligorCreditScoreLocCurrent'].mean()
@@ -579,13 +574,13 @@ log['average_credit'] = cs
 log['rating'] = rating
 
 
-# In[33]:
+# In[32]:
 
 
 len(all_ids) == len(master_list)
 
 
-# In[34]:
+# In[33]:
 
 
 master['accountStatusEvent'].value_counts(dropna = False)
@@ -593,13 +588,13 @@ master['accountStatusEvent'].value_counts(dropna = False)
 
 # ### Adding final fields
 
-# In[35]:
+# In[34]:
 
 
 master['securitization'] = term
 
 
-# In[36]:
+# In[35]:
 
 
 def get_target(row):
@@ -631,161 +626,36 @@ def get_target(row):
     
 
 
-# In[37]:
+# In[36]:
 
 
 master['target'] = master.apply(get_target, axis = 1)
 
 
-# In[38]:
+# In[37]:
 
 
 master['target'].value_counts(dropna = False)
 
 
-# In[39]:
-
-
-def finding_regions(state):
-    
-    """
-    Get region
-    """
-    
-    if state in west:
-        return 'West'
-    elif state in south_west:
-        return 'SouthWest'
-    elif state in south_east:
-        return 'SouthEast'
-    elif state in mid_west:
-        return 'MidWest'
-    elif state in north_east:
-        return 'NorthEast'
-    else:
-        return 'Unknown'
-    
-
-
-# In[40]:
-
-
-master['region'] = np.nan
-    
-master['region'] = master['obligorGeographicLocationLocCurrent'].apply(finding_regions)
-
-
-# In[42]:
-
-
-def get_or_year(init):
-    
-    """
-    Get origination year
-    """
-    
-    year = init[0:4]
-    
-    return year
-
-
-# In[43]:
-
-
-year_col = 'originationDateRLocCurrent'
-
-year_vals = master[year_col].values
-years = [get_or_year(y) for y in year_vals]
-master['originationYear'] = years
-
-
-# In[44]:
+# In[38]:
 
 
 master.shape
 
 
-# ### Adding outcome for transaction file
-
-# In[47]:
-
-
-m_col = 'id'
-m_type = 'left'
-merged = pd.merge(data, master[[m_col, 'target']], on = m_col, how = m_type)
-ft_shape = merged.shape[0]
-
-
-# In[48]:
-
-
-ft_shape
-
-
-# In[50]:
-
-
-init_shape == sec_shape == ft_shape
-
-
-# ### Vals cols
-
-# In[51]:
-
-
-vals_cols = [col for col in list(master.columns) if 'vals' in col.lower()]
-
-
-# In[52]:
-
-
-def fix_vals(row, column):
-
-    """
-    Fix column values
-    """
-
-    init = str(row[column])
-
-    ret_val = 'str: ' + init
-
-    return ret_val
-
-
-# In[53]:
-
-
-for col in vals_cols:
-    print(col)
-    master[col] = master[col].astype(str)
-    master[col] = 'str: ' + master[col]
-
-
 # ### Export
 
-# In[55]:
+# In[39]:
 
 
 e_folder = 'data/static/'
 e_file = '{} static.csv'.format(term)
 e_path = e_folder + e_file
-print(e_path)
-print(master.shape)
 master.to_csv(e_path, index = False)
 
 
-# In[56]:
-
-
-t_folder = 'data/transaction/prepared/'
-t_file = '{} transaction.csv'.format(term)
-t_path = t_folder + t_file
-print(t_path)
-print(merged.shape)
-merged.to_csv(t_path)
-
-
-# In[57]:
+# In[40]:
 
 
 # export log
@@ -796,7 +666,7 @@ with open(j_path, 'w') as outfile:
     json.dump(log, outfile, indent = 4, separators = (',', ': '), sort_keys = False)
 
 
-# In[58]:
+# In[41]:
 
 
 print('continue...')

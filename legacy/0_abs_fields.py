@@ -56,20 +56,9 @@ fields_dict['modeling'] = {'y': 'target',
                            'x_sum':xs_sum}
 
 
-# In[6]:
-
-
-fields_dict['regions'] = {}
-fields_dict['regions']['west'] = ['CA', 'OR', 'UT','WA', 'CO', 'NV', 'AK', 'MT', 'HI', 'WY', 'ID']
-fields_dict['regions']['south_west'] = ['AZ', 'TX', 'NM', 'OK']
-fields_dict['regions']['south_east'] = ['GA', 'NC', 'VA', 'FL', 'KY', 'SC', 'LA', 'AL', 'WV', 'DC', 'AR', 'DE', 'MS', 'TN' ]
-fields_dict['regions']['mid_west'] = ['IL', 'MO', 'MN', 'OH', 'WI', 'KS', 'MI', 'SD', 'IA', 'NE', 'IN', 'ND']
-fields_dict['regions']['north_east'] = ['CT', 'NY', 'PA', 'NJ', 'RI','MA', 'MD', 'VT', 'NH', 'ME']
-
-
 # ### Export
 
-# In[8]:
+# In[6]:
 
 
 e_folder = 'data/json/fields/'
@@ -78,7 +67,7 @@ e_path = e_folder + e_file
 e_path
 
 
-# In[9]:
+# In[7]:
 
 
 with open(e_path, 'w') as outfile:  
@@ -86,7 +75,7 @@ with open(e_path, 'w') as outfile:
     
 
 
-# In[10]:
+# In[8]:
 
 
 print('complete...')
