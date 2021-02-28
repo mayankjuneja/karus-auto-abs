@@ -43,7 +43,8 @@
         "1": "Not stated, not verified",
         "2": "Stated, not verified",
         "3": "Stated, verified but not to level 4 or level 5",
-        "4": "Stated level 4 verified"
+        "4": "Stated level 4 verified",
+        "5": "Stated, level 5 verified"
     },
     "obligorEmploymentVerificationCode": {
         "1": "Not stated, not verified",

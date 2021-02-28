@@ -42,32 +42,40 @@ with open(path) as f:
     files_dict = json.load(f)
 keys = list(files_dict.keys())
 use_keys = [k for k in keys if k != 'total_securitizations']
+use_keys.sort()
+len(use_keys)
 
-
-# ### Grab data
 
 # In[4]:
 
 
-term = 'AmeriCredit Automobile Receivables Trust 2020-1 Data Tape'
+use_keys
+
+
+# ### Grab data
+
+# In[5]:
+
+
+term = 'Santander Drive Auto Receivables Trust 2020-4 Data Tape'
 securitization = [file for file in use_keys if term in file][0]
 securitization
 
 
-# In[5]:
+# In[6]:
 
 
 sub_dict = files_dict[securitization]
 
 
-# In[6]:
+# In[7]:
 
 
 s_keys = list(sub_dict.keys())
 s_keys = [k for k in s_keys if k != 'releases']
 
 
-# In[7]:
+# In[8]:
 
 
 use_len = len(s_keys)
@@ -76,7 +84,7 @@ use_len
 
 # ### Combine data tapes
 
-# In[8]:
+# In[9]:
 
 
 collected = []
@@ -104,7 +112,7 @@ for file in s_keys:
 
 # ### Quick processing
 
-# In[9]:
+# In[10]:
 
 
 master_df = pd.DataFrame()
@@ -116,21 +124,22 @@ for df in master_list:
     
 
 
-# In[10]:
+# In[11]:
 
 
 master_df = master_df.reset_index(drop = True)
 
 
-# In[11]:
+# In[12]:
 
 
 master_df['obligorCreditScore'].replace('None', np.nan, inplace = True)
+master_df['obligorCreditScore'].replace('-', np.nan, inplace = True)
 master_df['obligorCreditScore'] = master_df['obligorCreditScore'].astype(float)
 master_df['obligorCreditScore'].mean()
 
 
-# In[12]:
+# In[13]:
 
 
 master_df.shape
@@ -138,7 +147,7 @@ master_df.shape
 
 # ### Export
 
-# In[13]:
+# In[14]:
 
 
 e_folder = 'data/transaction/'
@@ -147,13 +156,13 @@ e_path = e_folder + e_file
 e_path
 
 
-# In[14]:
+# In[15]:
 
 
 master_df.to_csv(e_path, index = False)
 
 
-# In[15]:
+# In[16]:
 
 
 print('complete...')

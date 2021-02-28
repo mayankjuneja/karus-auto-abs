@@ -35,7 +35,7 @@ pd.set_option('display.max_colwidth', -1)
 # In[3]:
 
 
-term = 'AmeriCredit Automobile Receivables Trust 2017-1 Data Tape'
+term = 'Santander Drive Auto Receivables Trust 2020-4 Data Tape'
 finder = re.compile('\d{4,}\W\d{1,}')
 add_id = re.findall(finder, term)[0]
 add_id
@@ -56,24 +56,6 @@ data.shape
 # In[5]:
 
 
-data = data.drop_duplicates(subset = ['assetNumber', 'reportingPeriodBeginningDate'], keep = 'first')
-sec_shape = data.shape[0]
-data.shape
-
-
-# In[6]:
-
-
-if init_shape == sec_shape:
-    print('Matching shapes')
-else:
-    sys.exit('DUPLICATE ROWS')
-    
-
-
-# In[7]:
-
-
 # load fields
 f_folder = 'data/json/fields/'
 f_file = 'fields.json'
@@ -82,7 +64,7 @@ with open(f_path) as f:
     fields = json.load(f)
 
 
-# In[8]:
+# In[6]:
 
 
 # load mapper
@@ -96,7 +78,7 @@ with open(m_path) as f:
 
 # ### Setting fields
 
-# In[9]:
+# In[7]:
 
 
 init_id = fields['init_id'][0]
@@ -118,7 +100,7 @@ north_east = fields['regions']['north_east']
 
 # ### ID and dates
 
-# In[10]:
+# In[8]:
 
 
 def reorder_date(init):
@@ -144,13 +126,13 @@ def reorder_date(init):
     return date
 
 
-# In[11]:
+# In[9]:
 
 
 data['id'] = data[init_id].str.replace('=', '').str.replace('"', '').str.strip() + '-' + add_id
 
 
-# In[12]:
+# In[10]:
 
 
 for col in date_cols:
@@ -159,6 +141,26 @@ for col in date_cols:
     dates = [reorder_date(v) for v in values]
     data['{}R'.format(col)] = dates
     
+
+
+# In[11]:
+
+
+data = data.sort_values(by=['reportingPeriodBeginningDateR'], ascending=False)
+data = data.drop_duplicates(subset = ['id', 'reportingPeriodBeginningDateR'], keep = 'first')
+sec_shape = data.shape[0]
+data.shape
+
+
+# In[12]:
+
+
+if init_shape == sec_shape:
+    dup_rows = False
+    print('Matching shapes')
+else:
+    dup_rows = True 
+    print('Duplicate rows')
 
 
 # In[13]:
@@ -182,6 +184,7 @@ data[replacer_cols] = data[replacer_cols].replace('-', np.nan)
 
 # clean cols
 for col in clean_cols:
+    data[col] = data[col].astype(str)
     data[col] = data[col].str.strip()
     data[col] = data[col].astype(float)
     
@@ -335,7 +338,7 @@ len(id_lists)
 # In[28]:
 
 
-def convert_static(df):
+def convert_static(df, exception_status):
     
     """
     Create static df
@@ -349,6 +352,7 @@ def convert_static(df):
 
     # dict
     account_dict = {}
+    account_dict['exceptionStatus'] = exception_status
     account_dict[id_col] = _id
     account_dict['records'] = len(df)
 
@@ -522,15 +526,17 @@ for ids in id_lists:
     # get results
     s2 = time.time()
     try:
-        results = [convert_static(d) for d in a]
+        exception_status = False
+        results = [convert_static(d, exception_status) for d in a]
         for r in results:
             master_list.append(r)
     except:
         try:
+            exception_status = True 
             cautions = cautions + 1
             print('HITTING EXCEPTION')
             for l2 in l:
-                res = convert_static(l2)
+                res = convert_static(l2, exception_status)
                 master_list.append(res)
         except:
             status = 'bad'
@@ -554,6 +560,7 @@ for ids in id_lists:
 log['total_time'] = e1 - s1
 log['run_status'] = status
 log['cautions'] = cautions
+log['duplicate_rows'] = dup_rows
 
 
 # In[31]:
@@ -675,7 +682,7 @@ master['region'] = np.nan
 master['region'] = master['obligorGeographicLocationLocCurrent'].apply(finding_regions)
 
 
-# In[42]:
+# In[41]:
 
 
 def get_or_year(init):
@@ -689,7 +696,7 @@ def get_or_year(init):
     return year
 
 
-# In[43]:
+# In[42]:
 
 
 year_col = 'originationDateRLocCurrent'
@@ -699,15 +706,27 @@ years = [get_or_year(y) for y in year_vals]
 master['originationYear'] = years
 
 
+# In[43]:
+
+
+master['originationDate'] = pd.to_datetime(master['originationDateRLocCurrent'])
+
+
 # In[44]:
 
 
 master.shape
 
 
+# In[45]:
+
+
+#master[master['exceptionStatus'].isin([True])]
+
+
 # ### Adding outcome for transaction file
 
-# In[47]:
+# In[46]:
 
 
 m_col = 'id'
@@ -716,27 +735,34 @@ merged = pd.merge(data, master[[m_col, 'target']], on = m_col, how = m_type)
 ft_shape = merged.shape[0]
 
 
-# In[48]:
+# In[47]:
 
 
 ft_shape
 
 
-# In[50]:
+# In[48]:
 
 
-init_shape == sec_shape == ft_shape
+final_bool = init_shape == sec_shape == ft_shape
+log['lengths_match'] = final_bool
+
+
+# In[49]:
+
+
+final_bool
 
 
 # ### Vals cols
 
-# In[51]:
+# In[50]:
 
 
 vals_cols = [col for col in list(master.columns) if 'vals' in col.lower()]
 
 
-# In[52]:
+# In[51]:
 
 
 def fix_vals(row, column):
@@ -752,7 +778,7 @@ def fix_vals(row, column):
     return ret_val
 
 
-# In[53]:
+# In[52]:
 
 
 for col in vals_cols:
@@ -763,7 +789,7 @@ for col in vals_cols:
 
 # ### Export
 
-# In[55]:
+# In[53]:
 
 
 e_folder = 'data/static/'
@@ -774,7 +800,7 @@ print(master.shape)
 master.to_csv(e_path, index = False)
 
 
-# In[56]:
+# In[54]:
 
 
 t_folder = 'data/transaction/prepared/'
@@ -785,7 +811,7 @@ print(merged.shape)
 merged.to_csv(t_path)
 
 
-# In[57]:
+# In[55]:
 
 
 # export log
@@ -796,7 +822,7 @@ with open(j_path, 'w') as outfile:
     json.dump(log, outfile, indent = 4, separators = (',', ': '), sort_keys = False)
 
 
-# In[58]:
+# In[56]:
 
 
 print('continue...')
