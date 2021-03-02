@@ -132,7 +132,7 @@ def get_originator(sec):
     if 'lease' in sec:
         t = 'lease'
     else:
-        t = 'recievables'
+        t = 'receivables'
     
     return o, t
     
