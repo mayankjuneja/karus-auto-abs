@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="41c64ce5-18f9-4c0c-beb1-73fee6e24670" name="Default Changelist" comment="" />
+    <list default="true" id="41c64ce5-18f9-4c0c-beb1-73fee6e24670" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.ipynb_checkpoints/2_identify_securitizations-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/.ipynb_checkpoints/2_identify_securitizations-checkpoint.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.ipynb_checkpoints/4_create_static_file-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/.ipynb_checkpoints/4_create_static_file-checkpoint.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.ipynb_checkpoints/5_combine_static_files-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/.ipynb_checkpoints/5_combine_static_files-checkpoint.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/2_identify_securitizations.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/2_identify_securitizations.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/4_create_static_file.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/4_create_static_file.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/5_combine_static_files.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/5_combine_static_files.ipynb" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,7 +51,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -55,6 +62,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -88,7 +96,7 @@
   <component name="ToolWindowManager">
     <frame x="64" y="23" width="1542" height="979" extended-state="0" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.27666667" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.28" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />

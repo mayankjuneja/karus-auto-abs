@@ -47,7 +47,7 @@ files
 # In[6]:
 
 
-finder = re.compile('\d{4,}\W\d{1,}')
+finder = re.compile(r'\b\d{4}-[A-Za-z\d]+\b')
 
 
 # In[7]:

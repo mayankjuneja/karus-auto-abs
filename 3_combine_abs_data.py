@@ -16,6 +16,7 @@ import numpy as np
 import time
 import os
 import re
+from project_functions import get_originator
 
 
 # In[2]:
@@ -57,7 +58,7 @@ use_keys
 # In[5]:
 
 
-term = 'Santander Drive Auto Receivables Trust 2020-4 Data Tape'
+term = 'Toyota Auto Receivables 2020-D Owner Trust Data Tape'
 securitization = [file for file in use_keys if term in file][0]
 securitization
 
@@ -72,7 +73,7 @@ sub_dict = files_dict[securitization]
 
 
 s_keys = list(sub_dict.keys())
-s_keys = [k for k in s_keys if k != 'releases']
+s_keys = [k for k in s_keys if term in k]
 
 
 # In[8]:
@@ -82,9 +83,31 @@ use_len = len(s_keys)
 use_len
 
 
+# In[9]:
+
+
+s_keys
+
+
+# In[10]:
+
+
+finder = re.compile(r'\b\d{4}-[A-Za-z\d]+\b')
+securitization = re.search(finder, term)
+sec_use = securitization.group()
+originator = get_originator(term)[0]
+
+
+# In[11]:
+
+
+print(originator)
+print(sec_use)
+
+
 # ### Combine data tapes
 
-# In[9]:
+# In[12]:
 
 
 collected = []
@@ -112,25 +135,19 @@ for file in s_keys:
 
 # ### Quick processing
 
-# In[10]:
+# In[13]:
 
 
-master_df = pd.DataFrame()
-count = 0
-for df in master_list:
-    count = count + 1
-    print(count)
-    master_df = master_df.append(df)
-    
+master_df = pd.concat(master_list)
 
 
-# In[11]:
+# In[14]:
 
 
 master_df = master_df.reset_index(drop = True)
 
 
-# In[12]:
+# In[15]:
 
 
 master_df['obligorCreditScore'].replace('None', np.nan, inplace = True)
@@ -139,7 +156,7 @@ master_df['obligorCreditScore'] = master_df['obligorCreditScore'].astype(float)
 master_df['obligorCreditScore'].mean()
 
 
-# In[13]:
+# In[16]:
 
 
 master_df.shape
@@ -147,22 +164,47 @@ master_df.shape
 
 # ### Export
 
-# In[14]:
+# In[29]:
 
 
-e_folder = 'data/transaction/'
-e_file = '{}.csv'.format(term)
+top_level = 'data/karus_datasets/{}/'.format(originator)
+top_bool = os.path.isdir(top_level)
+if top_bool == False:
+    os.mkdir(top_level)
+
+
+# In[30]:
+
+
+e_folder = 'data/karus_datasets/{}/{} {}/'.format(originator, originator, sec_use)
+e_folder
+
+
+# In[31]:
+
+
+try:
+    os.mkdir(e_folder)
+    print('created {}'.format(e_folder))
+except:
+    print('dir already exists')
+
+
+# In[32]:
+
+
+e_file = 'transaction_raw.csv'.format(term)
 e_path = e_folder + e_file
 e_path
 
 
-# In[15]:
+# In[33]:
 
 
 master_df.to_csv(e_path, index = False)
 
 
-# In[16]:
+# In[34]:
 
 
 print('complete...')

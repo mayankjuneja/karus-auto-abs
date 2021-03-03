@@ -3,7 +3,7 @@
 
 # ### Load libs
 
-# In[1]:
+# In[8]:
 
 
 import pandas as pd
@@ -18,11 +18,12 @@ from multiprocessing import Pool
 from joblib import Parallel, delayed
 import sys
 import os
+from project_functions import get_originator
 
 pandarallel.initialize()
 
 
-# In[2]:
+# In[9]:
 
 
 n = 750
@@ -33,34 +34,36 @@ pd.set_option('display.max_colwidth', -1)
 
 # ### Load data
 
-# In[3]:
+# In[15]:
 
 
-originator = 'Santander'
+term = 'Santander Drive Auto Receivables Trust 2020-4 Data Tape'
 
 
-# In[4]:
+# In[16]:
 
 
-term = 'Santander Drive Auto Receivables Trust 2017-1 Data Tape'
-finder = re.compile('\d{4,}\W\d{1,}')
-add_id = re.findall(finder, term)[0]
-add_id
+originator = get_originator(term)[0]
+finder = re.compile(r'\b\d{4}-[A-Za-z\d]+\b')
+init_id = re.search(finder, term)
+add_id = init_id.group()
+print(originator)
+print(add_id)
 
 
-# In[5]:
+# In[17]:
 
 
 # load abs
-folder = 'data/transaction/'
-file = '{}.csv'.format(term)
+folder = 'data/karus_datasets/{}/{} {}/'.format(originator, originator, add_id)
+file = 'transaction_raw.csv'.format(term)
 path = folder + file
 data = pd.read_csv(path)
 init_shape = data.shape[0]
 data.shape
 
 
-# In[6]:
+# In[18]:
 
 
 # load fields
@@ -71,7 +74,7 @@ with open(f_path) as f:
     fields = json.load(f)
 
 
-# In[7]:
+# In[19]:
 
 
 # load mapper
@@ -85,7 +88,7 @@ with open(m_path) as f:
 
 # ### Setting fields
 
-# In[8]:
+# In[20]:
 
 
 init_id = fields['init_id'][0]
@@ -107,7 +110,7 @@ north_east = fields['regions']['north_east']
 
 # ### ID and dates
 
-# In[9]:
+# In[21]:
 
 
 def reorder_date(init):
@@ -133,13 +136,13 @@ def reorder_date(init):
     return date
 
 
-# In[10]:
+# In[22]:
 
 
 data['id'] = data[init_id].str.replace('=', '').str.replace('"', '').str.strip() + '-' + add_id
 
 
-# In[11]:
+# In[23]:
 
 
 for col in date_cols:
@@ -150,7 +153,7 @@ for col in date_cols:
     
 
 
-# In[12]:
+# In[24]:
 
 
 data = data.sort_values(by=['reportingPeriodBeginningDateR'], ascending=False)
@@ -159,7 +162,7 @@ sec_shape = data.shape[0]
 data.shape
 
 
-# In[13]:
+# In[25]:
 
 
 if init_shape == sec_shape:
@@ -170,7 +173,7 @@ else:
     print('Duplicate rows')
 
 
-# In[14]:
+# In[26]:
 
 
 # s_col = 'loanMaturityDate'
@@ -180,13 +183,13 @@ else:
 
 # ### Replacing values
 
-# In[15]:
+# In[27]:
 
 
 data[replacer_cols] = data[replacer_cols].replace('-', np.nan)
 
 
-# In[16]:
+# In[28]:
 
 
 # clean cols
@@ -199,7 +202,7 @@ for col in clean_cols:
 
 # ### Replacing values
 
-# In[17]:
+# In[29]:
 
 
 def replace_val(init, column):
@@ -229,7 +232,7 @@ def replace_val(init, column):
     
 
 
-# In[18]:
+# In[30]:
 
 
 for col in m_cols:
@@ -240,7 +243,7 @@ for col in m_cols:
     
 
 
-# In[19]:
+# In[31]:
 
 
 # s_col = 'subvented'
@@ -250,7 +253,7 @@ for col in m_cols:
 
 # ### Account status
 
-# In[20]:
+# In[32]:
 
 
 def acct_status(row, b_col, e_col, zero_col, thresh):
@@ -275,7 +278,7 @@ def acct_status(row, b_col, e_col, zero_col, thresh):
     
 
 
-# In[21]:
+# In[33]:
 
 
 b_col = 'reportingPeriodBeginningLoanBalanceAmount'
@@ -284,13 +287,13 @@ z_col = 'zeroBalanceCodeM'
 thresh = 50
 
 
-# In[22]:
+# In[34]:
 
 
 data['accountStatus'] = data.parallel_apply(acct_status, args = (b_col, e_col, z_col, thresh, ), axis = 1)
 
 
-# In[23]:
+# In[35]:
 
 
 data['accountStatus'].value_counts()
@@ -298,7 +301,7 @@ data['accountStatus'].value_counts()
 
 # ### Numeric conversion
 
-# In[24]:
+# In[36]:
 
 
 # force convert cols to numeric
@@ -310,7 +313,7 @@ for col in numeric_cols:
 
 # ### Application
 
-# In[25]:
+# In[37]:
 
 
 id_col = 'id'
@@ -318,7 +321,7 @@ status_col = 'accountStatus'
 values = ['Charged-off', 'Prepaid or Matured', 'Repurchased or Replaced']
 
 
-# In[26]:
+# In[38]:
 
 
 all_ids = list(data[id_col].unique())
@@ -327,7 +330,7 @@ print_vals = list(range(0, len(all_ids), 100))
 len(all_ids)
 
 
-# In[27]:
+# In[39]:
 
 
 # break ids into list chunks
@@ -336,13 +339,13 @@ id_lists = [all_ids[i:i + num] for i in range(0, len(all_ids), num)]
 #id_lists = [id_lists[-1]]
 
 
-# In[28]:
+# In[40]:
 
 
 len(id_lists)
 
 
-# In[29]:
+# In[41]:
 
 
 def convert_static(df, exception_status):
@@ -504,7 +507,7 @@ def convert_static(df, exception_status):
     return account_dict
 
 
-# In[30]:
+# In[42]:
 
 
 log = {}
@@ -561,7 +564,7 @@ for ids in id_lists:
     
 
 
-# In[31]:
+# In[43]:
 
 
 log['total_time'] = e1 - s1
@@ -570,14 +573,14 @@ log['cautions'] = cautions
 log['duplicate_rows'] = dup_rows
 
 
-# In[32]:
+# In[44]:
 
 
 master = pd.DataFrame(master_list)
 log['loans'] = len(master)
 
 
-# In[33]:
+# In[45]:
 
 
 cs = master['obligorCreditScoreLocCurrent'].mean()
@@ -593,13 +596,13 @@ log['average_credit'] = cs
 log['rating'] = rating
 
 
-# In[34]:
+# In[46]:
 
 
 len(all_ids) == len(master_list)
 
 
-# In[35]:
+# In[47]:
 
 
 master['accountStatusEvent'].value_counts(dropna = False)
@@ -607,13 +610,13 @@ master['accountStatusEvent'].value_counts(dropna = False)
 
 # ### Adding final fields
 
-# In[36]:
+# In[48]:
 
 
 master['securitization'] = term
 
 
-# In[37]:
+# In[49]:
 
 
 def get_target(row):
@@ -645,19 +648,19 @@ def get_target(row):
     
 
 
-# In[38]:
+# In[50]:
 
 
 master['target'] = master.apply(get_target, axis = 1)
 
 
-# In[39]:
+# In[51]:
 
 
 master['target'].value_counts(dropna = False)
 
 
-# In[40]:
+# In[52]:
 
 
 def finding_regions(state):
@@ -681,7 +684,7 @@ def finding_regions(state):
     
 
 
-# In[41]:
+# In[53]:
 
 
 master['region'] = np.nan
@@ -689,7 +692,7 @@ master['region'] = np.nan
 master['region'] = master['obligorGeographicLocationLocCurrent'].apply(finding_regions)
 
 
-# In[42]:
+# In[54]:
 
 
 def get_or_year(init):
@@ -703,7 +706,7 @@ def get_or_year(init):
     return year
 
 
-# In[43]:
+# In[55]:
 
 
 year_col = 'originationDateRLocCurrent'
@@ -713,19 +716,19 @@ years = [get_or_year(y) for y in year_vals]
 master['originationYear'] = years
 
 
-# In[44]:
+# In[56]:
 
 
 master['originationDate'] = pd.to_datetime(master['originationDateRLocCurrent'])
 
 
-# In[45]:
+# In[57]:
 
 
 master.shape
 
 
-# In[46]:
+# In[58]:
 
 
 #master[master['exceptionStatus'].isin([True])]
@@ -733,7 +736,7 @@ master.shape
 
 # ### Adding outcome for transaction file
 
-# In[47]:
+# In[59]:
 
 
 m_col = 'id'
@@ -742,20 +745,20 @@ merged = pd.merge(data, master[[m_col, 'target']], on = m_col, how = m_type)
 ft_shape = merged.shape[0]
 
 
-# In[48]:
+# In[60]:
 
 
 ft_shape
 
 
-# In[49]:
+# In[61]:
 
 
 final_bool = init_shape == sec_shape == ft_shape
 log['lengths_match'] = final_bool
 
 
-# In[50]:
+# In[62]:
 
 
 final_bool
@@ -763,13 +766,13 @@ final_bool
 
 # ### Vals cols
 
-# In[51]:
+# In[63]:
 
 
 vals_cols = [col for col in list(master.columns) if 'vals' in col.lower()]
 
 
-# In[52]:
+# In[64]:
 
 
 def fix_vals(row, column):
@@ -785,7 +788,7 @@ def fix_vals(row, column):
     return ret_val
 
 
-# In[53]:
+# In[65]:
 
 
 for col in vals_cols:
@@ -796,24 +799,31 @@ for col in vals_cols:
 
 # ### Export
 
-# In[60]:
+# In[66]:
 
 
 export_folder = 'data/karus_datasets/{}/{} {}/'.format(originator, originator, add_id)
 export_folder
 
 
-# In[61]:
+# In[71]:
 
 
-try:
-    os.mkdir(export_folder)
-    print('created {}'.format(export_folder))
-except:
-    print('folder already exists')
+path_bool = os.path.isdir(export_folder)
+path_bool
 
 
-# In[62]:
+# In[72]:
+
+
+if path_bool == False:
+    os.mkir(export_folder)
+    print('dir folder')
+else:
+    print('dir exists')
+
+
+# In[73]:
 
 
 #e_folder = 'data/static/'
@@ -824,7 +834,7 @@ print(master.shape)
 master.to_csv(e_path, index = False)
 
 
-# In[63]:
+# In[74]:
 
 
 #t_folder = 'data/transaction/prepared/'
@@ -835,7 +845,7 @@ print(merged.shape)
 merged.to_csv(t_path)
 
 
-# In[64]:
+# In[75]:
 
 
 # export log
@@ -846,7 +856,7 @@ with open(j_path, 'w') as outfile:
     json.dump(log, outfile, indent = 4, separators = (',', ': '), sort_keys = False)
 
 
-# In[65]:
+# In[76]:
 
 
 print('continue...')
